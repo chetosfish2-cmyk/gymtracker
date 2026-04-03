@@ -183,6 +183,11 @@ function loadHistory() {
 }
 
 function exportToExcel() {
+    if (!history || history.length === 0) {
+        alert("No history to export.");
+        return;
+    }
+
     const rows = [];
 
     history.forEach(workout => {
@@ -199,10 +204,9 @@ function exportToExcel() {
         });
     });
 
-    if (rows.length === 0) return;
-
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
+
     XLSX.utils.book_append_sheet(workbook, worksheet, "History");
 
     XLSX.writeFile(workbook, "gym_history.xlsx");
