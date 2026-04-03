@@ -19,6 +19,7 @@ header {
     color: white;
     font-size: 18px;
     display: none;
+    cursor: pointer;
 }
 
 h1 {
@@ -89,4 +90,3 @@ input {
     font-size: 14px;
     margin-left: 5px;
 }
-

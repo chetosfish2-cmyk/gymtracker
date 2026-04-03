@@ -1,4 +1,4 @@
-// Your routine extracted from your Excel file
+// Routine based on your Excel file (English names for UI)
 const routine = {
     "Day 1 Back-Biceps": [
         "Neutral grip pulldown",
@@ -90,15 +90,17 @@ function loadWorkout(day) {
     routine[day].forEach(exercise => {
         workoutData[exercise] = [];
 
+        const safeId = exercise.replace(/[^a-zA-Z0-9]/g, "_");
+
         const card = document.createElement("div");
         card.className = "exercise-card";
 
         card.innerHTML = `
             <h3>${exercise}</h3>
-            <input type="number" placeholder="Weight (kg)" id="w-${exercise}">
-            <input type="number" placeholder="Reps" id="r-${exercise}">
-            <button class="add-set-btn" onclick="addSet('${exercise}')">Add Set</button>
-            <div id="sets-${exercise}"></div>
+            <input type="number" placeholder="Weight (kg)" id="w-${safeId}">
+            <input type="number" placeholder="Reps" id="r-${safeId}">
+            <button class="add-set-btn" onclick="addSet('${exercise}', '${safeId}')">Add Set</button>
+            <div id="sets-${safeId}"></div>
         `;
 
         content.appendChild(card);
@@ -111,22 +113,22 @@ function loadWorkout(day) {
     content.appendChild(finishBtn);
 }
 
-function addSet(exercise) {
-    const weight = document.getElementById(`w-${exercise}`).value;
-    const reps = document.getElementById(`r-${exercise}`).value;
+function addSet(exercise, safeId) {
+    const weight = document.getElementById(`w-${safeId}`).value;
+    const reps = document.getElementById(`r-${safeId}`).value;
 
     if (!weight || !reps) return;
 
     workoutData[exercise].push({ weight, reps });
 
-    const container = document.getElementById(`sets-${exercise}`);
+    const container = document.getElementById(`sets-${safeId}`);
     const entry = document.createElement("div");
     entry.className = "set-entry";
     entry.textContent = `• ${weight} kg × ${reps}`;
     container.appendChild(entry);
 
-    document.getElementById(`w-${exercise}`).value = "";
-    document.getElementById(`r-${exercise}`).value = "";
+    document.getElementById(`w-${safeId}`).value = "";
+    document.getElementById(`r-${safeId}`).value = "";
 }
 
 function finishWorkout() {
@@ -148,6 +150,13 @@ function loadHistory() {
     const content = document.getElementById("content");
     content.innerHTML = "";
 
+    if (history.length === 0) {
+        const msg = document.createElement("div");
+        msg.textContent = "No workouts logged yet.";
+        content.appendChild(msg);
+        return;
+    }
+
     history.forEach(workout => {
         const block = document.createElement("div");
         block.className = "exercise-card";
@@ -165,6 +174,38 @@ function loadHistory() {
         block.innerHTML = html;
         content.appendChild(block);
     });
+
+    const exportBtn = document.createElement("button");
+    exportBtn.className = "finish-btn";
+    exportBtn.textContent = "Export to Excel";
+    exportBtn.onclick = exportToExcel;
+    content.appendChild(exportBtn);
+}
+
+function exportToExcel() {
+    const rows = [];
+
+    history.forEach(workout => {
+        Object.keys(workout.exercises).forEach(exercise => {
+            workout.exercises[exercise].forEach(set => {
+                rows.push({
+                    Date: workout.date,
+                    Day: workout.day,
+                    Exercise: exercise,
+                    Weight: set.weight,
+                    Reps: set.reps
+                });
+            });
+        });
+    });
+
+    if (rows.length === 0) return;
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "History");
+
+    XLSX.writeFile(workbook, "gym_history.xlsx");
 }
 
 loadDaySelector();
